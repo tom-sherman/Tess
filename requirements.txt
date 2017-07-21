@@ -1,0 +1,5 @@
+praw
+pytesseract
+PIL
+yaml
+
