@@ -4,6 +4,7 @@ import pytesseract as tess
 import requests
 import yaml
 import praw
+import praw.models
 
 with open('config.yml') as data_file:
     CONFIG = yaml.load(data_file)
@@ -17,11 +18,12 @@ def main():
                          password=CONFIG['password'])
 
     subreddit = reddit.subreddit('all')
+    submission: praw.models.Submission
     for submission in subreddit.hot(limit=10):
         if submission.post_hint == 'image':
             print('Incoming OCR... (https://www.reddit.com{})'.format(submission.permalink))
             txt = read_img(submission.url)
-            print('No text' if len(txt) == 0 else txt)
+            print('No text' if len(txt) == 0 else build_comment(txt))
             print()
 
 
@@ -31,6 +33,13 @@ def read_img(url) -> str:
     tess.pytesseract.tesseract_cmd = 'tesseract-bin/tesseract.exe'
     return tess.image_to_string(img)
 
+
+def build_comment(text) -> str:
+    new_text = ''
+    for line in text.split('\n'):
+        new_text = new_text + '    {}\n'.format(line)
+
+    return CONFIG['comment_template'].format(new_text)
 
 if __name__ == '__main__':
     main()
